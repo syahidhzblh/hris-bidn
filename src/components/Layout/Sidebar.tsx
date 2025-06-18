@@ -18,7 +18,7 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ isCollapsed }: SidebarProps) {
-  const { user, logout } = useAuth();
+  const { user, signOut } = useAuth();
 
   const menuItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
@@ -29,9 +29,17 @@ export default function Sidebar({ isCollapsed }: SidebarProps) {
     { icon: Bell, label: 'Announcements', path: '/announcements' },
   ];
 
-  if (user?.role === 'admin') {
+  if (user?.profile?.role === 'admin') {
     menuItems.push({ icon: Settings, label: 'Settings', path: '/settings' });
   }
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
 
   return (
     <div className={`bg-white border-r border-gray-200 transition-all duration-300 ${
@@ -72,18 +80,22 @@ export default function Sidebar({ isCollapsed }: SidebarProps) {
         {!isCollapsed && user && (
           <div className="flex items-center mb-3">
             <img
-              src={user.avatar || 'https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?w=40&h=40&fit=crop&crop=face'}
-              alt={user.name}
+              src={user.profile?.avatar_url || 'https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?w=40&h=40&fit=crop&crop=face'}
+              alt={user.profile?.full_name || 'User'}
               className="h-8 w-8 rounded-full"
             />
             <div className="ml-3">
-              <p className="text-sm font-medium text-gray-900">{user.name}</p>
-              <p className="text-xs text-gray-500 capitalize">{user.role}</p>
+              <p className="text-sm font-medium text-gray-900">
+                {user.profile?.full_name || user.email}
+              </p>
+              <p className="text-xs text-gray-500 capitalize">
+                {user.profile?.role || 'employee'}
+              </p>
             </div>
           </div>
         )}
         <button
-          onClick={logout}
+          onClick={handleLogout}
           className={`flex items-center w-full px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900 rounded-lg transition-colors ${
             isCollapsed ? 'justify-center' : ''
           }`}

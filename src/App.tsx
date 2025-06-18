@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Layout from './components/Layout/Layout';
 import LoginForm from './components/Auth/LoginForm';
@@ -11,9 +11,9 @@ import Documents from './pages/Documents';
 import Announcements from './pages/Announcements';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, isLoading } = useAuth();
+  const { user, loading } = useAuth();
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
