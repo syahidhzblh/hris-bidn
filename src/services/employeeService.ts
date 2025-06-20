@@ -1,109 +1,78 @@
-import { supabase, handleSupabaseError } from '../lib/supabase';
-import { Database } from '../types/database';
+import { employeeAPI } from '../lib/api';
 
-type Employee = Database['public']['Tables']['employees']['Row'];
-type EmployeeInsert = Database['public']['Tables']['employees']['Insert'];
-type Profile = Database['public']['Tables']['profiles']['Row'];
+export interface Employee {
+  id: string;
+  user_id: string;
+  employee_id: string;
+  position: string;
+  division_id: string;
+  join_date: string;
+  employment_status: 'active' | 'inactive' | 'terminated';
+  salary_base?: number;
+  address?: string;
+  emergency_contact?: string;
+  emergency_phone?: string;
+  email?: string;
+  full_name?: string;
+  phone?: string;
+  avatar_url?: string;
+  division_name?: string;
+}
 
-export interface EmployeeWithProfile extends Employee {
-  profile?: Profile;
-  division?: {
-    id: string;
-    name: string;
-  };
+export interface Division {
+  id: string;
+  name: string;
+  description?: string;
+  manager_id?: string;
+  manager_name?: string;
 }
 
 export class EmployeeService {
-  static async getEmployees(): Promise<EmployeeWithProfile[]> {
+  static async getEmployees(): Promise<Employee[]> {
     try {
-      const { data, error } = await supabase
-        .from('employees')
-        .select(`
-          *,
-          profile:profiles!employees_profile_id_fkey(*),
-          division:divisions!employees_division_id_fkey(id, name)
-        `)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      return data || [];
-    } catch (error) {
-      console.error('Error fetching employees:', error);
-      throw new Error(handleSupabaseError(error));
+      const response = await employeeAPI.getEmployees();
+      return response.data.employees;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || 'Failed to fetch employees');
     }
   }
 
-  static async getEmployeeByProfileId(profileId: string): Promise<EmployeeWithProfile | null> {
+  static async getEmployeeByUserId(userId: string): Promise<Employee | null> {
     try {
-      const { data, error } = await supabase
-        .from('employees')
-        .select(`
-          *,
-          profile:profiles!employees_profile_id_fkey(*),
-          division:divisions!employees_division_id_fkey(id, name)
-        `)
-        .eq('profile_id', profileId)
-        .single();
-
-      if (error && error.code !== 'PGRST116') {
-        throw error;
+      const response = await employeeAPI.getEmployeeByUserId(userId);
+      return response.data.employee;
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        return null;
       }
-
-      return data;
-    } catch (error) {
-      console.error('Error fetching employee by profile ID:', error);
-      throw new Error(handleSupabaseError(error));
+      throw new Error(error.response?.data?.error || 'Failed to fetch employee');
     }
   }
 
-  static async createEmployee(employeeData: EmployeeInsert): Promise<Employee> {
+  static async createEmployee(employeeData: any): Promise<Employee> {
     try {
-      const { data, error } = await supabase
-        .from('employees')
-        .insert(employeeData)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    } catch (error) {
-      console.error('Error creating employee:', error);
-      throw new Error(handleSupabaseError(error));
+      const response = await employeeAPI.createEmployee(employeeData);
+      return response.data.employee;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || 'Failed to create employee');
     }
   }
 
-  static async updateEmployee(
-    id: string,
-    updates: Partial<Employee>
-  ): Promise<Employee> {
+  static async updateEmployee(id: string, updates: any): Promise<Employee> {
     try {
-      const { data, error } = await supabase
-        .from('employees')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    } catch (error) {
-      console.error('Error updating employee:', error);
-      throw new Error(handleSupabaseError(error));
+      const response = await employeeAPI.updateEmployee(id, updates);
+      return response.data.employee;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || 'Failed to update employee');
     }
   }
 
-  static async getDivisions() {
+  static async getDivisions(): Promise<Division[]> {
     try {
-      const { data, error } = await supabase
-        .from('divisions')
-        .select('*')
-        .order('name');
-
-      if (error) throw error;
-      return data || [];
-    } catch (error) {
-      console.error('Error fetching divisions:', error);
-      throw new Error(handleSupabaseError(error));
+      const response = await employeeAPI.getDivisions();
+      return response.data.divisions;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || 'Failed to fetch divisions');
     }
   }
 }
